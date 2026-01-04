@@ -1,43 +1,38 @@
 package com.styloai.app.data.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class WeatherInfo(
     val temperature: Double,
-    @SerialName("feels_like") val feelsLike: Double,
+    @SerializedName("feels_like") val feelsLike: Double,
     val humidity: Int,
-    @SerialName("wind_speed") val windSpeed: Double,
+    @SerializedName("wind_speed") val windSpeed: Double,
     val condition: String,
     val icon: String,
     val description: String
 )
 
-@Serializable
 data class WeatherForecast(
     val current: WeatherInfo,
     val hourly: List<HourlyForecast>,
     val daily: List<DailyForecast>
 )
 
-@Serializable
 data class HourlyForecast(
     val time: String,
     val temperature: Double,
     val condition: String,
     val icon: String,
-    @SerialName("precipitation_chance") val precipitationChance: Int
+    @SerializedName("precipitation_chance") val precipitationChance: Int
 )
 
-@Serializable
 data class DailyForecast(
     val date: String,
-    @SerialName("temp_high") val tempHigh: Double,
-    @SerialName("temp_low") val tempLow: Double,
+    @SerializedName("temp_high") val tempHigh: Double,
+    @SerializedName("temp_low") val tempLow: Double,
     val condition: String,
     val icon: String,
-    @SerialName("precipitation_chance") val precipitationChance: Int
+    @SerializedName("precipitation_chance") val precipitationChance: Int
 )
 
 object WeatherCondition {

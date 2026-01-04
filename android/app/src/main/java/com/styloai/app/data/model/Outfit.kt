@@ -1,57 +1,52 @@
 package com.styloai.app.data.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class Outfit(
     val id: String,
-    @SerialName("user_id") val userId: String,
+    @SerializedName("user_id") val userId: String,
     val name: String? = null,
-    val items: List<WardrobeItem>,
+    val items: List<WardrobeItem> = emptyList(),
     val occasion: String? = null,
     val season: String? = null,
-    @SerialName("overall_score") val overallScore: Int? = null,
-    @SerialName("color_harmony_score") val colorHarmonyScore: Int? = null,
-    @SerialName("style_coherence_score") val styleCoherenceScore: Int? = null,
-    @SerialName("occasion_fit_score") val occasionFitScore: Int? = null,
-    @SerialName("weather_suitability_score") val weatherSuitabilityScore: Int? = null,
-    @SerialName("completeness_score") val completenessScore: Int? = null,
-    @SerialName("ai_feedback") val aiFeedback: String? = null,
-    @SerialName("ai_suggestions") val aiSuggestions: List<String> = emptyList(),
-    @SerialName("wear_count") val wearCount: Int = 0,
-    @SerialName("last_worn") val lastWorn: String? = null,
-    @SerialName("is_favorite") val isFavorite: Boolean = false,
-    @SerialName("created_at") val createdAt: String
+    @SerializedName("overall_score") val overallScore: Int? = null,
+    @SerializedName("color_harmony_score") val colorHarmonyScore: Int? = null,
+    @SerializedName("style_coherence_score") val styleCoherenceScore: Int? = null,
+    @SerializedName("occasion_fit_score") val occasionFitScore: Int? = null,
+    @SerializedName("weather_suitability_score") val weatherSuitabilityScore: Int? = null,
+    @SerializedName("completeness_score") val completenessScore: Int? = null,
+    @SerializedName("ai_feedback") val aiFeedback: String? = null,
+    @SerializedName("ai_suggestions") val aiSuggestions: List<String> = emptyList(),
+    @SerializedName("wear_count") val wearCount: Int = 0,
+    @SerializedName("last_worn") val lastWorn: String? = null,
+    @SerializedName("is_favorite") val isFavorite: Boolean = false,
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
-@Serializable
 data class OutfitRecommendation(
     val outfit: Outfit,
-    @SerialName("recommendation_reason") val recommendationReason: String,
-    @SerialName("weather_info") val weatherInfo: WeatherInfo? = null,
+    @SerializedName("recommendation_reason") val recommendationReason: String,
+    @SerializedName("weather_info") val weatherInfo: WeatherInfo? = null,
     val occasion: String
 )
 
-@Serializable
 data class CreateOutfitRequest(
-    @SerialName("item_ids") val itemIds: List<String>,
+    @SerializedName("item_ids") val itemIds: List<String>,
     val name: String? = null,
     val occasion: String? = null,
     val season: String? = null
 )
 
-@Serializable
 data class OutfitCalendarEntry(
     val id: String,
-    @SerialName("user_id") val userId: String,
-    @SerialName("outfit_id") val outfitId: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("outfit_id") val outfitId: String,
     val outfit: Outfit? = null,
     val date: String,
     val occasion: String? = null,
     val notes: String? = null,
-    @SerialName("was_worn") val wasWorn: Boolean = false,
-    @SerialName("created_at") val createdAt: String
+    @SerializedName("was_worn") val wasWorn: Boolean = false,
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
 object Occasion {

@@ -1,40 +1,37 @@
 package com.styloai.app.data.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class WardrobeItem(
     val id: String,
-    @SerialName("user_id") val userId: String,
-    @SerialName("image_url") val imageUrl: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("image_url") val imageUrl: String,
     val category: String,
     val subcategory: String? = null,
     val name: String? = null,
-    @SerialName("primary_color") val primaryColor: String? = null,
-    @SerialName("secondary_color") val secondaryColor: String? = null,
+    @SerializedName("primary_color") val primaryColor: String? = null,
+    @SerializedName("secondary_color") val secondaryColor: String? = null,
     val pattern: String? = null,
     val material: String? = null,
     val brand: String? = null,
     val seasons: List<String> = emptyList(),
     val occasions: List<String> = emptyList(),
     val formality: Int = 3,
-    @SerialName("wear_count") val wearCount: Int = 0,
-    @SerialName("last_worn") val lastWorn: String? = null,
-    @SerialName("is_favorite") val isFavorite: Boolean = false,
-    @SerialName("ai_tags") val aiTags: List<String> = emptyList(),
+    @SerializedName("wear_count") val wearCount: Int = 0,
+    @SerializedName("last_worn") val lastWorn: String? = null,
+    @SerializedName("is_favorite") val isFavorite: Boolean = false,
+    @SerializedName("ai_tags") val aiTags: List<String> = emptyList(),
     val notes: String? = null,
-    @SerialName("created_at") val createdAt: String
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
-@Serializable
 data class CreateWardrobeItemRequest(
-    @SerialName("image_url") val imageUrl: String,
+    @SerializedName("image_url") val imageUrl: String,
     val category: String,
     val subcategory: String? = null,
     val name: String? = null,
-    @SerialName("primary_color") val primaryColor: String? = null,
-    @SerialName("secondary_color") val secondaryColor: String? = null,
+    @SerializedName("primary_color") val primaryColor: String? = null,
+    @SerializedName("secondary_color") val secondaryColor: String? = null,
     val pattern: String? = null,
     val material: String? = null,
     val brand: String? = null,
@@ -44,30 +41,27 @@ data class CreateWardrobeItemRequest(
     val notes: String? = null
 )
 
-@Serializable
 data class WardrobeStats(
-    @SerialName("total_items") val totalItems: Int,
-    @SerialName("by_category") val byCategory: Map<String, Int>,
-    @SerialName("by_color") val byColor: Map<String, Int>,
-    @SerialName("most_worn") val mostWorn: List<WardrobeItem>,
-    @SerialName("least_worn") val leastWorn: List<WardrobeItem>,
+    @SerializedName("total_items") val totalItems: Int,
+    @SerializedName("by_category") val byCategory: Map<String, Int>,
+    @SerializedName("by_color") val byColor: Map<String, Int>,
+    @SerializedName("most_worn") val mostWorn: List<WardrobeItem>,
+    @SerializedName("least_worn") val leastWorn: List<WardrobeItem>,
     val favorites: List<WardrobeItem>
 )
 
-@Serializable
 data class DetectedItem(
     val category: String,
     val subcategory: String,
-    @SerialName("suggested_name") val suggestedName: String,
-    @SerialName("primary_color") val primaryColor: String,
+    @SerializedName("suggested_name") val suggestedName: String,
+    @SerializedName("primary_color") val primaryColor: String,
     val confidence: Double,
     var isSelected: Boolean = true
 )
 
-@Serializable
 data class OutfitDetectionResult(
-    @SerialName("detected_items") val detectedItems: List<DetectedItem>,
-    @SerialName("image_url") val imageUrl: String
+    @SerializedName("detected_items") val detectedItems: List<DetectedItem>,
+    @SerializedName("image_url") val imageUrl: String
 )
 
 object ClothingCategory {

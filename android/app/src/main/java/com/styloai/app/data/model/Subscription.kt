@@ -1,37 +1,32 @@
 package com.styloai.app.data.model
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class SubscriptionPlan(
     val id: String,
     val name: String,
     val price: Double,
     val interval: String,
     val features: List<String>,
-    @SerialName("google_product_id") val googleProductId: String
+    @SerializedName("google_product_id") val googleProductId: String
 )
 
-@Serializable
 data class Subscription(
     val id: String,
-    @SerialName("user_id") val userId: String,
+    @SerializedName("user_id") val userId: String,
     val tier: SubscriptionTier,
     val status: String,
-    @SerialName("current_period_start") val currentPeriodStart: String,
-    @SerialName("current_period_end") val currentPeriodEnd: String,
-    @SerialName("google_subscription_id") val googleSubscriptionId: String? = null,
-    @SerialName("created_at") val createdAt: String
+    @SerializedName("current_period_start") val currentPeriodStart: String,
+    @SerializedName("current_period_end") val currentPeriodEnd: String,
+    @SerializedName("google_subscription_id") val googleSubscriptionId: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
-@Serializable
 data class VerifyPurchaseRequest(
-    @SerialName("purchase_token") val purchaseToken: String,
-    @SerialName("product_id") val productId: String
+    @SerializedName("purchase_token") val purchaseToken: String,
+    @SerializedName("product_id") val productId: String
 )
 
-@Serializable
 data class VerifyPurchaseResponse(
     val success: Boolean,
     val subscription: Subscription? = null,
