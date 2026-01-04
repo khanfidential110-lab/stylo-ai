@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">STYLO AI</string>
+    <string name="login">Login</string>
+    <string name="register">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="name">Name</string>
+    <string name="home">Home</string>
+    <string name="wardrobe">Wardrobe</string>
+    <string name="chat">Chat</string>
+    <string name="profile">Profile</string>
+</resources>
