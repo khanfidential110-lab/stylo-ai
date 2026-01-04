@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,31 +71,31 @@ fun ProfileScreen(
                         title = "Style Profile",
                         onClick = { }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    Divider(modifier = Modifier.padding(start = 56.dp))
                     MenuRow(
                         icon = Icons.Default.BarChart,
                         title = "Wardrobe Analytics",
                         onClick = { }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    Divider(modifier = Modifier.padding(start = 56.dp))
                     MenuRow(
                         icon = Icons.Default.CalendarMonth,
                         title = "Outfit Calendar",
                         onClick = { }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    Divider(modifier = Modifier.padding(start = 56.dp))
                     MenuRow(
                         icon = Icons.Default.Favorite,
                         title = "Favorites",
                         onClick = { }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    Divider(modifier = Modifier.padding(start = 56.dp))
                     MenuRow(
                         icon = Icons.Default.Settings,
                         title = "Settings",
                         onClick = { }
                     )
-                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    Divider(modifier = Modifier.padding(start = 56.dp))
                     MenuRow(
                         icon = Icons.Default.Help,
                         title = "Help & Support",
@@ -117,7 +117,7 @@ fun ProfileScreen(
                     contentColor = ErrorRed
                 )
             ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Icon(Icons.Default.ExitToApp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Log Out")
             }

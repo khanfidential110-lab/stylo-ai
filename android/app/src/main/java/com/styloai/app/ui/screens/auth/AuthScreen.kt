@@ -183,13 +183,13 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
+            Divider(modifier = Modifier.weight(1f))
             Text(
                 text = "  or continue with  ",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            HorizontalDivider(modifier = Modifier.weight(1f))
+            Divider(modifier = Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(24.dp))

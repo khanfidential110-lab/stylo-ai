@@ -82,7 +82,7 @@ fun ChatScreen(
                 }
             }
 
-            HorizontalDivider()
+            Divider()
 
             // Input bar
             ChatInputBar(
