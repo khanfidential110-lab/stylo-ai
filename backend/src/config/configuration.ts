@@ -1,10 +1,10 @@
 export default () => ({
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
 
   database: {
     host: process.env.DATABASE_HOST || 'localhost',
-    port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+    port: parseInt(process.env.DATABASE_PORT || '5432', 10),
     username: process.env.DATABASE_USERNAME || 'stylo',
     password: process.env.DATABASE_PASSWORD || 'password',
     name: process.env.DATABASE_NAME || 'stylo_ai',
@@ -12,7 +12,7 @@ export default () => ({
 
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || '',
   },
 
@@ -36,13 +36,13 @@ export default () => ({
   },
 
   weather: {
-    apiKey: process.env.OPENWEATHER_API_KEY,
+    apiKey: process.env.OPENWEATHER_API_KEY || '',
     baseUrl: 'https://api.openweathermap.org/data/2.5',
   },
 
   ai: {
-    openrouterKey: process.env.OPENROUTER_API_KEY,
-    groqKey: process.env.GROQ_API_KEY,
+    openrouterKey: process.env.OPENROUTER_API_KEY || '',
+    groqKey: process.env.GROQ_API_KEY || '',
     openaiKey: process.env.OPENAI_API_KEY,
     anthropicKey: process.env.ANTHROPIC_API_KEY,
   },
