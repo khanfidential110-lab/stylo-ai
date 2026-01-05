@@ -33,7 +33,8 @@ android {
             )
         }
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+            // Use your computer's local IP for real device testing
+            buildConfigField("String", "API_BASE_URL", "\"http://21.0.0.52:3000\"")
         }
     }
 
