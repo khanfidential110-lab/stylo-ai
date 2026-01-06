@@ -32,6 +32,8 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    var showMenu by remember { mutableStateOf(false) }
+    var showConversationsSheet by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
@@ -40,13 +42,45 @@ fun ChatScreen(
         }
     }
 
+    // Load conversations on first load
+    LaunchedEffect(Unit) {
+        viewModel.loadConversations()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Style Assistant") },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("New Chat") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.startNewConversation()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Chat History") },
+                                onClick = {
+                                    showMenu = false
+                                    showConversationsSheet = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.History, contentDescription = null)
+                                }
+                            )
+                        }
                     }
                 }
             )
@@ -90,6 +124,18 @@ fun ChatScreen(
                 onTextChange = { viewModel.updateInputText(it) },
                 onSend = { viewModel.sendMessage() },
                 isLoading = uiState.isLoading
+            )
+        }
+
+        // Conversations sheet
+        if (showConversationsSheet) {
+            ConversationsSheet(
+                conversations = uiState.conversations,
+                onSelectConversation = { conversationId ->
+                    viewModel.loadConversation(conversationId)
+                    showConversationsSheet = false
+                },
+                onDismiss = { showConversationsSheet = false }
             )
         }
     }
@@ -234,4 +280,106 @@ fun ChatInputBar(
 private fun formatTimestamp(timestamp: Long): String {
     val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConversationsSheet(
+    conversations: List<com.styloai.app.data.model.Conversation>,
+    onSelectConversation: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = "Chat History",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (conversations.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.Chat,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = Gray400
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No previous chats",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = "Your chat history will appear here",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(conversations) { conversation ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelectConversation(conversation.id) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(BrandIndigo.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Chat,
+                                        contentDescription = null,
+                                        tint = BrandIndigo,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = conversation.title ?: "Chat",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = "${conversation.messageCount} messages",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
 }

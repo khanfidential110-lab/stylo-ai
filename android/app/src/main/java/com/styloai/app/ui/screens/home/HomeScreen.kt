@@ -82,6 +82,22 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Style Tips Section
+                if (uiState.styleTips.isNotEmpty()) {
+                    Text(
+                        text = "Style Tips for Today",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    StyleTipsCard(tips = uiState.styleTips)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
                 // Today's Recommendations
                 Text(
                     text = "Today's Outfit Picks",
@@ -117,6 +133,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                // First row of quick actions
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -125,8 +142,33 @@ fun HomeScreen(
                 ) {
                     QuickActionCard(
                         icon = Icons.Default.CameraAlt,
-                        title = "Add Item",
-                        subtitle = "Scan clothing",
+                        title = "Scan Item",
+                        subtitle = "Take a photo",
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToWardrobe
+                    )
+                    QuickActionCard(
+                        icon = Icons.Default.PhotoLibrary,
+                        title = "From Gallery",
+                        subtitle = "Add from photos",
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToWardrobe
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Second row of quick actions
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickActionCard(
+                        icon = Icons.Default.Edit,
+                        title = "Manual Entry",
+                        subtitle = "Add details",
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToWardrobe
                     )
@@ -230,13 +272,40 @@ fun WeatherCard(weather: WeatherInfo) {
                     )
                 }
                 Icon(
-                    imageVector = Icons.Default.WbSunny,
+                    imageVector = getWeatherIcon(weather.condition),
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
-                    tint = AccentAmber
+                    tint = getWeatherIconTint(weather.condition)
                 )
             }
         }
+    }
+}
+
+private fun getWeatherIcon(condition: String): androidx.compose.ui.graphics.vector.ImageVector {
+    return when (condition.lowercase()) {
+        "clear", "sunny" -> Icons.Default.WbSunny
+        "clouds", "cloudy", "partly cloudy", "overcast" -> Icons.Default.Cloud
+        "rain", "rainy", "drizzle", "showers" -> Icons.Default.WaterDrop
+        "thunderstorm", "storm" -> Icons.Default.Thunderstorm
+        "snow", "snowy", "sleet" -> Icons.Default.AcUnit
+        "mist", "fog", "haze" -> Icons.Default.Foggy
+        "wind", "windy" -> Icons.Default.Air
+        else -> Icons.Default.WbSunny
+    }
+}
+
+@Composable
+private fun getWeatherIconTint(condition: String): Color {
+    return when (condition.lowercase()) {
+        "clear", "sunny" -> AccentAmber
+        "clouds", "cloudy", "partly cloudy", "overcast" -> Color.White.copy(alpha = 0.8f)
+        "rain", "rainy", "drizzle", "showers" -> Color(0xFF64B5F6)
+        "thunderstorm", "storm" -> Color(0xFFFFD54F)
+        "snow", "snowy", "sleet" -> Color.White
+        "mist", "fog", "haze" -> Color.White.copy(alpha = 0.6f)
+        "wind", "windy" -> Color.White.copy(alpha = 0.8f)
+        else -> AccentAmber
     }
 }
 
@@ -298,6 +367,44 @@ fun OutfitRecommendationCard(recommendation: OutfitRecommendation) {
                     onClick = { },
                     label = { Text(Occasion.displayName(recommendation.occasion)) }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun StyleTipsCard(tips: List<String>) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AccentAmber.copy(alpha = 0.1f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            tips.forEachIndexed { index, tip ->
+                Row(
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = AccentAmber,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = tip,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                if (index < tips.size - 1) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
     }

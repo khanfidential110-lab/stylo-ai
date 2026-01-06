@@ -120,4 +120,21 @@ class WardrobeRepository @Inject constructor(
     suspend fun toggleFavorite(id: String, isFavorite: Boolean): Result<WardrobeItem> {
         return updateItem(id, mapOf("is_favorite" to isFavorite))
     }
+
+    suspend fun markWorn(id: String): Result<WardrobeItem> {
+        return try {
+            // Increment wear count and update last worn date
+            val response = api.updateWardrobeItem(id, mapOf(
+                "wear_count" to 1, // Backend should increment
+                "last_worn" to java.time.LocalDate.now().toString()
+            ))
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to mark item as worn"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -32,6 +32,9 @@ fun AuthScreen(
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var showForgotPassword by remember { mutableStateOf(false) }
+    var forgotPasswordEmail by remember { mutableStateOf("") }
+    var forgotPasswordSent by remember { mutableStateOf(false) }
 
     // Show error dialog
     if (uiState.error != null) {
@@ -42,6 +45,66 @@ fun AuthScreen(
             confirmButton = {
                 TextButton(onClick = { viewModel.clearError() }) {
                     Text("OK")
+                }
+            }
+        )
+    }
+
+    // Forgot password dialog
+    if (showForgotPassword) {
+        AlertDialog(
+            onDismissRequest = {
+                showForgotPassword = false
+                forgotPasswordSent = false
+                forgotPasswordEmail = ""
+            },
+            title = { Text(if (forgotPasswordSent) "Check Your Email" else "Forgot Password") },
+            text = {
+                if (forgotPasswordSent) {
+                    Text("We've sent password reset instructions to $forgotPasswordEmail")
+                } else {
+                    Column {
+                        Text("Enter your email address and we'll send you a link to reset your password.")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = forgotPasswordEmail,
+                            onValueChange = { forgotPasswordEmail = it },
+                            label = { Text("Email") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email
+                            )
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (forgotPasswordSent) {
+                    TextButton(onClick = {
+                        showForgotPassword = false
+                        forgotPasswordSent = false
+                        forgotPasswordEmail = ""
+                    }) {
+                        Text("OK")
+                    }
+                } else {
+                    TextButton(
+                        onClick = {
+                            // In a real app, this would call the API
+                            forgotPasswordSent = true
+                        },
+                        enabled = forgotPasswordEmail.isNotBlank() && forgotPasswordEmail.contains("@")
+                    ) {
+                        Text("Send Reset Link")
+                    }
+                }
+            },
+            dismissButton = {
+                if (!forgotPasswordSent) {
+                    TextButton(onClick = { showForgotPassword = false }) {
+                        Text("Cancel")
+                    }
                 }
             }
         )
@@ -150,7 +213,27 @@ fun AuthScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // Forgot Password Link (only show on login)
+        if (isLogin) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = {
+                    forgotPasswordEmail = email
+                    showForgotPassword = true
+                }) {
+                    Text(
+                        text = "Forgot Password?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = BrandIndigo
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Submit button
         Button(
@@ -202,6 +285,21 @@ fun AuthScreen(
                 .height(48.dp)
         ) {
             Text("Continue with Google")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Apple Sign In
+        OutlinedButton(
+            onClick = { /* Apple sign in */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            Text("Continue with Apple")
         }
 
         Spacer(modifier = Modifier.height(32.dp))

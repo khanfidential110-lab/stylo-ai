@@ -18,8 +18,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.styloai.app.ui.screens.auth.AuthScreen
 import com.styloai.app.ui.screens.auth.AuthViewModel
+import com.styloai.app.ui.screens.calendar.CalendarScreen
 import com.styloai.app.ui.screens.chat.ChatScreen
 import com.styloai.app.ui.screens.home.HomeScreen
+import com.styloai.app.ui.screens.outfits.OutfitsScreen
 import com.styloai.app.ui.screens.profile.ProfileScreen
 import com.styloai.app.ui.screens.wardrobe.WardrobeScreen
 
@@ -31,6 +33,8 @@ sealed class Screen(
 ) {
     data object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
     data object Wardrobe : Screen("wardrobe", "Wardrobe", Icons.Filled.Checkroom, Icons.Outlined.Checkroom)
+    data object Outfits : Screen("outfits", "Outfits", Icons.Filled.Style, Icons.Outlined.Style)
+    data object Calendar : Screen("calendar", "Calendar", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth)
     data object Chat : Screen("chat", "Chat", Icons.Filled.Chat, Icons.Outlined.Chat)
     data object Profile : Screen("profile", "Profile", Icons.Filled.Person, Icons.Outlined.Person)
     data object Auth : Screen("auth", "Auth", Icons.Filled.Lock, Icons.Outlined.Lock)
@@ -39,6 +43,7 @@ sealed class Screen(
 val bottomNavItems = listOf(
     Screen.Home,
     Screen.Wardrobe,
+    Screen.Outfits,
     Screen.Chat,
     Screen.Profile
 )
@@ -91,6 +96,12 @@ fun MainNavHost(
             }
             composable(Screen.Wardrobe.route) {
                 WardrobeScreen()
+            }
+            composable(Screen.Outfits.route) {
+                OutfitsScreen()
+            }
+            composable(Screen.Calendar.route) {
+                CalendarScreen()
             }
             composable(Screen.Chat.route) {
                 ChatScreen()

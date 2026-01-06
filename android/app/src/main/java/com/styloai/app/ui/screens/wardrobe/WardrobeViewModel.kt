@@ -14,15 +14,31 @@ import javax.inject.Inject
 data class WardrobeUiState(
     val isLoading: Boolean = true,
     val items: List<WardrobeItem> = emptyList(),
+    val filteredItems: List<WardrobeItem> = emptyList(),
     val selectedCategory: String? = null,
     val categories: List<String> = ClothingCategory.all,
     val stats: WardrobeStats? = null,
     val error: String? = null,
+    val searchQuery: String = "",
     val showAddItem: Boolean = false,
+    val showManualEntry: Boolean = false,
+    val showItemDetail: Boolean = false,
+    val selectedItem: WardrobeItem? = null,
     val selectedImageUri: Uri? = null,
     val captureMode: CaptureMode = CaptureMode.SINGLE,
     val isProcessing: Boolean = false,
-    val detectedItems: List<DetectedItem> = emptyList()
+    val detectedItems: List<DetectedItem> = emptyList(),
+    val manualEntryData: ManualEntryData = ManualEntryData()
+)
+
+data class ManualEntryData(
+    val name: String = "",
+    val category: String = ClothingCategory.TOPS,
+    val primaryColor: String = "",
+    val material: String = "",
+    val brand: String = "",
+    val selectedSeasons: List<String> = emptyList(),
+    val selectedOccasions: List<String> = emptyList()
 )
 
 enum class CaptureMode {
@@ -53,7 +69,8 @@ class WardrobeViewModel @Inject constructor(
                 onSuccess = { items ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        items = items
+                        items = items,
+                        filteredItems = filterItems(items, _uiState.value.searchQuery)
                     )
                 },
                 onFailure = { error ->
@@ -207,5 +224,161 @@ class WardrobeViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    // Search functionality
+    fun updateSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = query,
+            filteredItems = filterItems(_uiState.value.items, query)
+        )
+    }
+
+    private fun filterItems(items: List<WardrobeItem>, query: String): List<WardrobeItem> {
+        if (query.isBlank()) return items
+        val lowerQuery = query.lowercase()
+        return items.filter { item ->
+            item.name?.lowercase()?.contains(lowerQuery) == true ||
+            item.category.lowercase().contains(lowerQuery) ||
+            item.primaryColor?.lowercase()?.contains(lowerQuery) == true ||
+            item.brand?.lowercase()?.contains(lowerQuery) == true ||
+            item.material?.lowercase()?.contains(lowerQuery) == true
+        }
+    }
+
+    // Item detail
+    fun showItemDetail(item: WardrobeItem) {
+        _uiState.value = _uiState.value.copy(
+            showItemDetail = true,
+            selectedItem = item
+        )
+    }
+
+    fun hideItemDetail() {
+        _uiState.value = _uiState.value.copy(
+            showItemDetail = false,
+            selectedItem = null
+        )
+    }
+
+    // Manual entry
+    fun showManualEntry() {
+        _uiState.value = _uiState.value.copy(
+            showManualEntry = true,
+            manualEntryData = ManualEntryData()
+        )
+    }
+
+    fun hideManualEntry() {
+        _uiState.value = _uiState.value.copy(
+            showManualEntry = false,
+            manualEntryData = ManualEntryData()
+        )
+    }
+
+    fun updateManualEntryName(name: String) {
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(name = name)
+        )
+    }
+
+    fun updateManualEntryCategory(category: String) {
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(category = category)
+        )
+    }
+
+    fun updateManualEntryColor(color: String) {
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(primaryColor = color)
+        )
+    }
+
+    fun updateManualEntryMaterial(material: String) {
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(material = material)
+        )
+    }
+
+    fun updateManualEntryBrand(brand: String) {
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(brand = brand)
+        )
+    }
+
+    fun toggleManualEntrySeason(season: String) {
+        val currentSeasons = _uiState.value.manualEntryData.selectedSeasons.toMutableList()
+        if (currentSeasons.contains(season)) {
+            currentSeasons.remove(season)
+        } else {
+            currentSeasons.add(season)
+        }
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(selectedSeasons = currentSeasons)
+        )
+    }
+
+    fun toggleManualEntryOccasion(occasion: String) {
+        val currentOccasions = _uiState.value.manualEntryData.selectedOccasions.toMutableList()
+        if (currentOccasions.contains(occasion)) {
+            currentOccasions.remove(occasion)
+        } else {
+            currentOccasions.add(occasion)
+        }
+        _uiState.value = _uiState.value.copy(
+            manualEntryData = _uiState.value.manualEntryData.copy(selectedOccasions = currentOccasions)
+        )
+    }
+
+    fun saveManualEntry() {
+        val data = _uiState.value.manualEntryData
+        if (data.name.isBlank()) {
+            _uiState.value = _uiState.value.copy(error = "Please enter a name for the item")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessing = true)
+
+            val request = CreateWardrobeItemRequest(
+                imageUrl = "", // No image for manual entry
+                category = data.category,
+                name = data.name,
+                primaryColor = data.primaryColor.ifBlank { null },
+                material = data.material.ifBlank { null },
+                brand = data.brand.ifBlank { null },
+                seasons = data.selectedSeasons.ifEmpty { null },
+                occasions = data.selectedOccasions.ifEmpty { null }
+            )
+
+            repository.createItem(request).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(isProcessing = false)
+                    hideManualEntry()
+                    loadItems()
+                },
+                onFailure = {
+                    _uiState.value = _uiState.value.copy(
+                        isProcessing = false,
+                        error = "Failed to add item"
+                    )
+                }
+            )
+        }
+    }
+
+    fun markItemWorn(item: WardrobeItem) {
+        viewModelScope.launch {
+            repository.markWorn(item.id).onSuccess { updatedItem ->
+                val updatedItems = _uiState.value.items.map {
+                    if (it.id == updatedItem.id) updatedItem else it
+                }
+                _uiState.value = _uiState.value.copy(
+                    items = updatedItems,
+                    filteredItems = filterItems(updatedItems, _uiState.value.searchQuery),
+                    selectedItem = if (_uiState.value.selectedItem?.id == item.id) updatedItem else _uiState.value.selectedItem
+                )
+            }
+        }
     }
 }
