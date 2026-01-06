@@ -21,54 +21,67 @@ let WeatherService = class WeatherService {
     }
     async getCurrentWeather(city) {
         try {
-            const response = await axios_1.default.get(`${this.baseUrl}/weather`, {
-                params: {
-                    q: city,
-                    appid: this.apiKey,
-                    units: 'imperial',
-                },
+            const geoResponse = await axios_1.default.get('https://geocoding-api.open-meteo.com/v1/search', {
+                params: { name: city, count: 1, language: 'en', format: 'json' },
             });
-            const data = response.data;
-            return {
-                temperature: Math.round(data.main.temp),
-                feelsLike: Math.round(data.main.feels_like),
-                humidity: data.main.humidity,
-                description: data.weather[0].description,
-                icon: data.weather[0].icon,
-                windSpeed: Math.round(data.wind.speed),
-                city: data.name,
-                country: data.sys.country,
-            };
+            if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
+                return this.getMockWeather(city);
+            }
+            const { latitude, longitude, name, country } = geoResponse.data.results[0];
+            return this.getWeatherByCoordinates(latitude, longitude, name, country);
         }
         catch (error) {
+            console.error('Weather API Error:', error.message);
             return this.getMockWeather(city);
         }
     }
-    async getWeatherByCoordinates(lat, lon) {
+    async getWeatherByCoordinates(lat, lon, cityName, countryCode) {
         try {
-            const response = await axios_1.default.get(`${this.baseUrl}/weather`, {
+            const response = await axios_1.default.get('https://api.open-meteo.com/v1/forecast', {
                 params: {
-                    lat,
-                    lon,
-                    appid: this.apiKey,
-                    units: 'imperial',
+                    latitude: lat,
+                    longitude: lon,
+                    current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m',
+                    temperature_unit: 'fahrenheit',
+                    wind_speed_unit: 'mph',
                 },
             });
-            const data = response.data;
+            const current = response.data.current;
+            const { description, icon } = this.getWeatherDescription(current.weather_code);
             return {
-                temperature: Math.round(data.main.temp),
-                feelsLike: Math.round(data.main.feels_like),
-                humidity: data.main.humidity,
-                description: data.weather[0].description,
-                icon: data.weather[0].icon,
-                windSpeed: Math.round(data.wind.speed),
-                city: data.name,
-                country: data.sys.country,
+                temperature: Math.round(current.temperature_2m),
+                feelsLike: Math.round(current.apparent_temperature),
+                humidity: current.relative_humidity_2m,
+                description: description,
+                icon: icon,
+                windSpeed: Math.round(current.wind_speed_10m),
+                city: cityName || 'Unknown Location',
+                country: countryCode || '',
             };
         }
         catch (error) {
-            return this.getMockWeather('Unknown');
+            console.error('Weather API Error:', error.message);
+            return this.getMockWeather(cityName || 'Unknown');
         }
+    }
+    getWeatherDescription(code) {
+        if (code === 0)
+            return { description: 'Clear sky', icon: '01d' };
+        if (code <= 3)
+            return { description: 'Partly cloudy', icon: '02d' };
+        if (code <= 48)
+            return { description: 'Foggy', icon: '50d' };
+        if (code <= 67)
+            return { description: 'Rain', icon: '10d' };
+        if (code <= 77)
+            return { description: 'Snow', icon: '13d' };
+        if (code <= 82)
+            return { description: 'Rain showers', icon: '09d' };
+        if (code <= 86)
+            return { description: 'Snow showers', icon: '13d' };
+        if (code <= 99)
+            return { description: 'Thunderstorm', icon: '11d' };
+        return { description: 'Unknown', icon: '50d' };
     }
     async getForecast(city, days = 7) {
         try {

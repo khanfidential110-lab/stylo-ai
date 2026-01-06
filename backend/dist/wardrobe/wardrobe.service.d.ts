@@ -13,6 +13,7 @@ export declare class WardrobeService {
     private readonly configService;
     constructor(wardrobeRepository: Repository<WardrobeItem>, userRepository: Repository<User>, aiService: AiService, configService: ConfigService);
     create(userId: string, createDto: CreateWardrobeItemDto, imageUrl: string): Promise<WardrobeItem>;
+    analyzeClothing(imageUrl: string): Promise<import("./ai.service").ClothingAnalysis>;
     findAll(userId: string, query: QueryWardrobeDto): Promise<{
         items: WardrobeItem[];
         total: number;

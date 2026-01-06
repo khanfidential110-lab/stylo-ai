@@ -27,7 +27,8 @@ export declare class WeatherService {
     private readonly baseUrl;
     constructor(configService: ConfigService);
     getCurrentWeather(city: string): Promise<WeatherData>;
-    getWeatherByCoordinates(lat: number, lon: number): Promise<WeatherData>;
+    getWeatherByCoordinates(lat: number, lon: number, cityName?: string, countryCode?: string): Promise<WeatherData>;
+    private getWeatherDescription;
     getForecast(city: string, days?: number): Promise<ForecastData[]>;
     getClothingRecommendations(weather: WeatherData): {
         layers: string[];

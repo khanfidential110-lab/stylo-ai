@@ -25,6 +25,11 @@ class AuthRepository @Inject constructor(
     private val accessTokenKey = stringPreferencesKey("access_token")
     private val refreshTokenKey = stringPreferencesKey("refresh_token")
     private val userIdKey = stringPreferencesKey("user_id")
+    private val onboardingCompletedKey = stringPreferencesKey("onboarding_completed")
+
+    val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[onboardingCompletedKey] == "true"
+    }
 
     val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[accessTokenKey] != null
@@ -43,9 +48,18 @@ class AuthRepository @Inject constructor(
             val response = api.login(LoginRequest(email, password))
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                saveTokens(authResponse.tokens)
-                saveUserId(authResponse.user.id)
-                Result.success(authResponse.user)
+                saveTokensFromResponse(authResponse)
+                // Fetch user profile
+                val userResponse = api.getCurrentUser()
+                if (userResponse.isSuccessful && userResponse.body() != null) {
+                    val user = userResponse.body()!!
+                    saveUserId(user.id)
+                    Result.success(user)
+                } else {
+                    // Create placeholder user if fetch fails
+                    val placeholderUser = User(id = "temp", email = email, name = null)
+                    Result.success(placeholderUser)
+                }
             } else {
                 Result.failure(Exception(response.errorBody()?.string() ?: "Login failed"))
             }
@@ -59,9 +73,18 @@ class AuthRepository @Inject constructor(
             val response = api.register(RegisterRequest(email, password, name))
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                saveTokens(authResponse.tokens)
-                saveUserId(authResponse.user.id)
-                Result.success(authResponse.user)
+                saveTokensFromResponse(authResponse)
+                // Fetch user profile
+                val userResponse = api.getCurrentUser()
+                if (userResponse.isSuccessful && userResponse.body() != null) {
+                    val user = userResponse.body()!!
+                    saveUserId(user.id)
+                    Result.success(user)
+                } else {
+                    // Create placeholder user if fetch fails
+                    val placeholderUser = User(id = "temp", email = email, name = name)
+                    Result.success(placeholderUser)
+                }
             } else {
                 Result.failure(Exception(response.errorBody()?.string() ?: "Registration failed"))
             }
@@ -100,14 +123,27 @@ class AuthRepository @Inject constructor(
 
     private suspend fun saveTokens(tokens: AuthTokens) {
         context.dataStore.edit { prefs ->
-            prefs[accessTokenKey] = tokens.accessToken
-            prefs[refreshTokenKey] = tokens.refreshToken
+            tokens.accessToken?.let { prefs[accessTokenKey] = it }
+            tokens.refreshToken?.let { prefs[refreshTokenKey] = it }
+        }
+    }
+
+    private suspend fun saveTokensFromResponse(authResponse: AuthResponse) {
+        context.dataStore.edit { prefs ->
+            authResponse.accessToken?.let { prefs[accessTokenKey] = it }
+            authResponse.refreshToken?.let { prefs[refreshTokenKey] = it }
         }
     }
 
     private suspend fun saveUserId(userId: String) {
         context.dataStore.edit { prefs ->
             prefs[userIdKey] = userId
+        }
+    }
+
+    suspend fun saveOnboardingCompleted() {
+        context.dataStore.edit { prefs ->
+            prefs[onboardingCompletedKey] = "true"
         }
     }
 }

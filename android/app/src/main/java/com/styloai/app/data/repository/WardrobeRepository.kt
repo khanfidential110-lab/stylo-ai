@@ -4,6 +4,11 @@ import com.styloai.app.data.api.StyloApiService
 import com.styloai.app.data.model.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.io.File
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @Singleton
 class WardrobeRepository @Inject constructor(
@@ -17,7 +22,7 @@ class WardrobeRepository @Inject constructor(
         return try {
             val response = api.getWardrobeItems(category, season, occasion)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                Result.success(response.body()!!.items)
             } else {
                 Result.failure(Exception("Failed to fetch wardrobe items"))
             }
@@ -39,9 +44,19 @@ class WardrobeRepository @Inject constructor(
         }
     }
 
-    suspend fun createItem(request: CreateWardrobeItemRequest): Result<WardrobeItem> {
+    suspend fun createItem(request: CreateWardrobeItemRequest, imageFile: File? = null): Result<WardrobeItem> {
         return try {
-            val response = api.createWardrobeItem(request)
+            val response = if (imageFile != null) {
+                val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+                val categoryPart = request.category.toRequestBody("text/plain".toMediaTypeOrNull())
+                val colorPart = request.primaryColor?.toRequestBody("text/plain".toMediaTypeOrNull())
+                
+                api.uploadWardrobeItem(imagePart, categoryPart, colorPart)
+            } else {
+                api.createWardrobeItem(request)
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
@@ -91,9 +106,16 @@ class WardrobeRepository @Inject constructor(
         }
     }
 
-    suspend fun analyzeClothing(imageUrl: String): Result<Map<String, Any>> {
+    suspend fun analyzeClothing(imageUrl: String, imageFile: File? = null): Result<Map<String, Any>> {
         return try {
-            val response = api.analyzeClothing(mapOf("image_url" to imageUrl))
+            val response = if (imageFile != null) {
+                val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+                api.analyzeClothingFromImage(imagePart)
+            } else {
+                api.analyzeClothing(mapOf("image_url" to imageUrl))
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
@@ -104,9 +126,17 @@ class WardrobeRepository @Inject constructor(
         }
     }
 
-    suspend fun detectOutfitItems(imageUrl: String): Result<OutfitDetectionResult> {
+    suspend fun detectOutfitItems(imageUrl: String, imageFile: File? = null): Result<OutfitDetectionResult> {
         return try {
-            val response = api.detectOutfitItems(mapOf("image_url" to imageUrl))
+            val response = if (imageFile != null) {
+                val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+                // We can add autoSave param here if needed
+                api.detectOutfitFromImage(imagePart)
+            } else {
+                api.detectOutfitItems(mapOf("image_url" to imageUrl))
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {

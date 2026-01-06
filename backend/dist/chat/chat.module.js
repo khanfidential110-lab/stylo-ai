@@ -16,6 +16,7 @@ const llm_service_1 = require("./llm.service");
 const chat_message_entity_1 = require("../database/entities/chat-message.entity");
 const wardrobe_module_1 = require("../wardrobe/wardrobe.module");
 const weather_module_1 = require("../weather/weather.module");
+const gemini_service_1 = require("../common/services/gemini.service");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
@@ -27,8 +28,8 @@ exports.ChatModule = ChatModule = __decorate([
             weather_module_1.WeatherModule,
         ],
         controllers: [chat_controller_1.ChatController],
-        providers: [chat_service_1.ChatService, ai_chat_service_1.AiChatService, llm_service_1.LLMService],
-        exports: [chat_service_1.ChatService, llm_service_1.LLMService],
+        providers: [chat_service_1.ChatService, ai_chat_service_1.AiChatService, llm_service_1.LLMService, gemini_service_1.GeminiService],
+        exports: [chat_service_1.ChatService, llm_service_1.LLMService, gemini_service_1.GeminiService],
     })
 ], ChatModule);
 //# sourceMappingURL=chat.module.js.map

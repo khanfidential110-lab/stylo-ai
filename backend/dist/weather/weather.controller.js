@@ -16,7 +16,6 @@ exports.WeatherController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const weather_service_1 = require("./weather.service");
-const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 let WeatherController = class WeatherController {
     constructor(weatherService) {
         this.weatherService = weatherService;
@@ -69,8 +68,6 @@ __decorate([
 exports.WeatherController = WeatherController = __decorate([
     (0, swagger_1.ApiTags)('weather'),
     (0, common_1.Controller)('weather'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [weather_service_1.WeatherService])
 ], WeatherController);
 //# sourceMappingURL=weather.controller.js.map

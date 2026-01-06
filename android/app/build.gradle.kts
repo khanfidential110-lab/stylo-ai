@@ -34,7 +34,7 @@ android {
         }
         debug {
             // Use your computer's local IP for real device testing
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.85:3000\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.100.180:3000/api/v1\"")
         }
     }
 
@@ -75,6 +75,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
     implementation("androidx.compose.material:material-icons-extended")
 
     // Navigation
@@ -114,6 +115,10 @@ dependencies {
 
     // Testing
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("app.cash.turbine:turbine:1.0.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))

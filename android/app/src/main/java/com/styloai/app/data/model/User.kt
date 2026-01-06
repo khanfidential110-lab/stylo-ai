@@ -47,14 +47,16 @@ data class StyleProfile(
 )
 
 data class AuthTokens(
-    @SerializedName("access_token") val accessToken: String,
-    @SerializedName("refresh_token") val refreshToken: String,
-    @SerializedName("expires_in") val expiresIn: Int
+    val accessToken: String?,
+    val refreshToken: String?,
+    val expiresIn: Int?
 )
 
 data class AuthResponse(
-    val user: User,
-    val tokens: AuthTokens
+    val accessToken: String?,
+    val refreshToken: String?,
+    val expiresIn: Int?,
+    val user: User? = null
 )
 
 data class LoginRequest(

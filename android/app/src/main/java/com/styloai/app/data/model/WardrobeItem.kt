@@ -14,6 +14,7 @@ data class WardrobeItem(
     val pattern: String? = null,
     val material: String? = null,
     val brand: String? = null,
+    val size: String? = null,
     val seasons: List<String> = emptyList(),
     val occasions: List<String> = emptyList(),
     val formality: Int = 3,
@@ -26,7 +27,7 @@ data class WardrobeItem(
 )
 
 data class CreateWardrobeItemRequest(
-    @SerializedName("image_url") val imageUrl: String,
+    @SerializedName("image_url") val imageUrl: String? = null,
     val category: String,
     val subcategory: String? = null,
     val name: String? = null,
@@ -35,6 +36,7 @@ data class CreateWardrobeItemRequest(
     val pattern: String? = null,
     val material: String? = null,
     val brand: String? = null,
+    val size: String? = null,
     val seasons: List<String>? = null,
     val occasions: List<String>? = null,
     val formality: Int? = null,
@@ -62,6 +64,22 @@ data class DetectedItem(
 data class OutfitDetectionResult(
     @SerializedName("detected_items") val detectedItems: List<DetectedItem>,
     @SerializedName("image_url") val imageUrl: String
+)
+
+data class PaginatedWardrobeResponse(
+    val items: List<WardrobeItem>,
+    val total: Int,
+    val page: Int,
+    val limit: Int,
+    val totalPages: Int
+)
+
+data class PaginatedOutfitResponse(
+    val outfits: List<Outfit>,
+    val total: Int,
+    val page: Int,
+    val limit: Int,
+    val totalPages: Int
 )
 
 object ClothingCategory {

@@ -1,28 +1,30 @@
 package com.styloai.app.ui.screens.wardrobe
 
+import android.content.Context
 import android.net.Uri
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.styloai.app.data.model.*
 import com.styloai.app.data.repository.WardrobeRepository
+import com.styloai.app.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import javax.inject.Inject
 
 data class WardrobeUiState(
-    val isLoading: Boolean = true,
     val items: List<WardrobeItem> = emptyList(),
     val selectedCategory: String? = null,
     val categories: List<String> = ClothingCategory.all,
     val stats: WardrobeStats? = null,
-    val error: String? = null,
     val showAddItem: Boolean = false,
     val selectedImageUri: Uri? = null,
-    val captureMode: CaptureMode = CaptureMode.SINGLE,
+    val captureMode: CaptureMode = CaptureMode.OUTFIT,
     val isProcessing: Boolean = false,
-    val detectedItems: List<DetectedItem> = emptyList()
+    val detectedItems: List<DetectedItem> = emptyList(),
+    val searchQuery: String = ""
 )
 
 enum class CaptureMode {
@@ -31,11 +33,9 @@ enum class CaptureMode {
 
 @HiltViewModel
 class WardrobeViewModel @Inject constructor(
-    private val repository: WardrobeRepository
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(WardrobeUiState())
-    val uiState: StateFlow<WardrobeUiState> = _uiState
+    private val repository: WardrobeRepository,
+    @ApplicationContext private val context: Context
+) : BaseViewModel<WardrobeUiState>(WardrobeUiState()) {
 
     init {
         loadItems()
@@ -43,32 +43,30 @@ class WardrobeViewModel @Inject constructor(
 
     fun loadItems(category: String? = null) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                selectedCategory = category
-            )
+            setLoading(true)
+            updateState { it.copy(selectedCategory = category) }
 
             val result = repository.getItems(category = category)
             result.fold(
                 onSuccess = { items ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        items = items
-                    )
+                    setLoading(false)
+                    updateState { it.copy(items = items) }
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.message
-                    )
+                    setLoading(false)
+                    showError(error.message ?: "Failed to load items")
                 }
             )
 
             // Also load stats
             repository.getStats().onSuccess { stats ->
-                _uiState.value = _uiState.value.copy(stats = stats)
+                updateState { it.copy(stats = stats) }
             }
         }
+    }
+
+    fun updateSearchQuery(query: String) {
+        updateState { it.copy(searchQuery = query) }
     }
 
     fun selectCategory(category: String?) {
@@ -78,10 +76,14 @@ class WardrobeViewModel @Inject constructor(
     fun toggleFavorite(item: WardrobeItem) {
         viewModelScope.launch {
             repository.toggleFavorite(item.id, !item.isFavorite).onSuccess { updatedItem ->
-                val updatedItems = _uiState.value.items.map {
-                    if (it.id == updatedItem.id) updatedItem else it
+                updateState { state ->
+                    val updatedItems = state.items.map {
+                        if (it.id == updatedItem.id) updatedItem else it
+                    }
+                    state.copy(items = updatedItems)
                 }
-                _uiState.value = _uiState.value.copy(items = updatedItems)
+            }.onFailure { error ->
+                showError(error.message ?: "Failed to update favorite")
             }
         }
     }
@@ -89,55 +91,63 @@ class WardrobeViewModel @Inject constructor(
     fun deleteItem(item: WardrobeItem) {
         viewModelScope.launch {
             repository.deleteItem(item.id).onSuccess {
-                val updatedItems = _uiState.value.items.filter { it.id != item.id }
-                _uiState.value = _uiState.value.copy(items = updatedItems)
+                updateState { state ->
+                    val updatedItems = state.items.filter { it.id != item.id }
+                    state.copy(items = updatedItems)
+                }
+            }.onFailure { error ->
+                showError(error.message ?: "Failed to delete item")
             }
         }
     }
 
     fun showAddItem() {
-        _uiState.value = _uiState.value.copy(showAddItem = true)
+        updateState { it.copy(showAddItem = true) }
     }
 
     fun hideAddItem() {
-        _uiState.value = _uiState.value.copy(
-            showAddItem = false,
-            selectedImageUri = null,
-            detectedItems = emptyList()
-        )
+        updateState { 
+            it.copy(
+                showAddItem = false,
+                selectedImageUri = null,
+                detectedItems = emptyList()
+            )
+        }
     }
 
     fun setCaptureMode(mode: CaptureMode) {
-        _uiState.value = _uiState.value.copy(captureMode = mode)
+        updateState { it.copy(captureMode = mode) }
     }
 
     fun setSelectedImage(uri: Uri) {
-        _uiState.value = _uiState.value.copy(selectedImageUri = uri)
+        updateState { it.copy(selectedImageUri = uri) }
     }
 
     fun processImage(imageUrl: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProcessing = true)
+            updateState { it.copy(isProcessing = true) }
 
-            if (_uiState.value.captureMode == CaptureMode.OUTFIT) {
-                // Detect multiple items from outfit photo
-                repository.detectOutfitItems(imageUrl).fold(
+            if (uiState.value.captureMode == CaptureMode.OUTFIT) {
+                val uri = uiState.value.selectedImageUri
+                val file = if (uri != null) createFileFromUri(uri) else null
+
+                repository.detectOutfitItems(imageUrl, file).fold(
                     onSuccess = { result ->
-                        _uiState.value = _uiState.value.copy(
+                        updateState { it.copy(
                             isProcessing = false,
                             detectedItems = result.detectedItems
-                        )
+                        ) }
                     },
-                    onFailure = {
-                        _uiState.value = _uiState.value.copy(
-                            isProcessing = false,
-                            error = "Failed to detect items"
-                        )
+                    onFailure = { error ->
+                        updateState { it.copy(isProcessing = false) }
+                        showError(error.message ?: "Failed to detect items")
                     }
                 )
             } else {
-                // Single item mode - analyze and create
-                repository.analyzeClothing(imageUrl).fold(
+                 val uri = uiState.value.selectedImageUri
+                 val file = if (uri != null) createFileFromUri(uri) else null
+
+                repository.analyzeClothing(imageUrl, file).fold(
                     onSuccess = { analysis ->
                         val category = analysis["category"] as? String ?: "tops"
                         val color = analysis["primary_color"] as? String
@@ -146,25 +156,27 @@ class WardrobeViewModel @Inject constructor(
                             category = category,
                             primaryColor = color
                         )
-                        repository.createItem(request).fold(
-                            onSuccess = {
-                                _uiState.value = _uiState.value.copy(isProcessing = false)
-                                hideAddItem()
-                                loadItems()
-                            },
-                            onFailure = {
-                                _uiState.value = _uiState.value.copy(
-                                    isProcessing = false,
-                                    error = "Failed to add item"
-                                )
-                            }
-                        )
+                        
+                        if (file != null) {
+                            repository.createItem(request, file).fold(
+                                onSuccess = {
+                                    updateState { it.copy(isProcessing = false) }
+                                    hideAddItem()
+                                    loadItems()
+                                },
+                                onFailure = { error ->
+                                    updateState { it.copy(isProcessing = false) }
+                                    showError(error.message ?: "Failed to add item")
+                                }
+                            )
+                        } else {
+                            updateState { it.copy(isProcessing = false) }
+                            showError("Failed to process image file")
+                        }
                     },
-                    onFailure = {
-                        _uiState.value = _uiState.value.copy(
-                            isProcessing = false,
-                            error = "Failed to analyze image"
-                        )
+                    onFailure = { error ->
+                        updateState { it.copy(isProcessing = false) }
+                        showError(error.message ?: "Failed to analyze image")
                     }
                 )
             }
@@ -172,19 +184,21 @@ class WardrobeViewModel @Inject constructor(
     }
 
     fun toggleDetectedItemSelection(index: Int) {
-        val items = _uiState.value.detectedItems.toMutableList()
-        if (index < items.size) {
-            items[index] = items[index].copy(isSelected = !items[index].isSelected)
-            _uiState.value = _uiState.value.copy(detectedItems = items)
+        updateState { state ->
+            val items = state.detectedItems.toMutableList()
+            if (index < items.size) {
+                items[index] = items[index].copy(isSelected = !items[index].isSelected)
+                state.copy(detectedItems = items)
+            } else state
         }
     }
 
     fun saveDetectedItems(imageUrl: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProcessing = true)
+            updateState { it.copy(isProcessing = true) }
 
-            val selectedItems = _uiState.value.detectedItems.filter { it.isSelected }
-            var successCount = 0
+            val selectedItems = uiState.value.detectedItems.filter { it.isSelected }
+            var success = true
 
             selectedItems.forEach { detectedItem ->
                 val request = CreateWardrobeItemRequest(
@@ -194,18 +208,33 @@ class WardrobeViewModel @Inject constructor(
                     name = detectedItem.suggestedName,
                     primaryColor = detectedItem.primaryColor
                 )
-                repository.createItem(request).onSuccess {
-                    successCount++
+                repository.createItem(request).onFailure { 
+                    success = false
                 }
             }
 
-            _uiState.value = _uiState.value.copy(isProcessing = false)
+            updateState { it.copy(isProcessing = false) }
+            if (!success) {
+                showError("Some items failed to save")
+            }
             hideAddItem()
             loadItems()
         }
     }
 
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+    private fun createFileFromUri(uri: Uri): File? {
+        return try {
+            val contentResolver = context.contentResolver
+            val inputStream: InputStream? = contentResolver.openInputStream(uri)
+            val file = File.createTempFile("upload", ".jpg", context.cacheDir)
+            val outputStream = FileOutputStream(file)
+            inputStream?.copyTo(outputStream)
+            inputStream?.close()
+            outputStream.close()
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

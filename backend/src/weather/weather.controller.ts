@@ -2,24 +2,19 @@ import {
   Controller,
   Get,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { WeatherService } from './weather.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('weather')
 @Controller('weather')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class WeatherController {
-  constructor(private readonly weatherService: WeatherService) {}
+  constructor(private readonly weatherService: WeatherService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get current weather' })

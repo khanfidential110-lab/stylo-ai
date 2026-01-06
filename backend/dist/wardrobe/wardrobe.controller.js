@@ -75,6 +75,25 @@ let WardrobeController = class WardrobeController {
         }
         return result;
     }
+    async detectFromImage(user, file, detectDto) {
+        if (!file) {
+            throw new Error('No image file provided');
+        }
+        const imageUrl = `https://cdn.stylo-ai.com/uploads/${file.filename}`;
+        const result = await this.outfitDetectionService.detectItemsFromPhoto(imageUrl);
+        if (detectDto.autoSave && result.detectedItems.length > 0) {
+            const savedItems = await this.wardrobeService.bulkCreate(user.id, result.detectedItems.map((item) => ({
+                imageUrl: item.croppedImageUrl || imageUrl,
+                data: {
+                    name: item.suggestedName,
+                    category: item.category,
+                    subcategory: item.subcategory,
+                },
+            })));
+            return { ...result, savedItems };
+        }
+        return result;
+    }
     async saveDetectedItems(user, saveDto) {
         const selectedItems = saveDto.items.filter((item) => item.selected !== false);
         const savedItems = await this.wardrobeService.bulkCreate(user.id, selectedItems.map((item) => ({
@@ -89,6 +108,13 @@ let WardrobeController = class WardrobeController {
             message: `${savedItems.length} items saved to wardrobe`,
             items: savedItems,
         };
+    }
+    async analyzeFromImage(user, file) {
+        if (!file) {
+            throw new Error('No image file provided');
+        }
+        const imageUrl = `https://cdn.stylo-ai.com/uploads/${file.filename}`;
+        return this.wardrobeService.analyzeClothing(imageUrl);
     }
 };
 exports.WardrobeController = WardrobeController;
@@ -201,6 +227,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], WardrobeController.prototype, "detectItems", null);
 __decorate([
+    (0, common_1.Post)('detect/upload'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiOperation)({ summary: 'Detect clothing items from an uploaded photo' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns detected items' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_entity_1.User, Object, detect_items_dto_1.DetectItemsDto]),
+    __metadata("design:returntype", Promise)
+], WardrobeController.prototype, "detectFromImage", null);
+__decorate([
     (0, common_1.Post)('detect/save'),
     (0, swagger_1.ApiOperation)({ summary: 'Save selected detected items to wardrobe' }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Items saved to wardrobe' }),
@@ -211,6 +250,18 @@ __decorate([
         detect_items_dto_1.SaveDetectedItemsDto]),
     __metadata("design:returntype", Promise)
 ], WardrobeController.prototype, "saveDetectedItems", null);
+__decorate([
+    (0, common_1.Post)('analyze/upload'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image')),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiOperation)({ summary: 'Analyze clothing item from an uploaded photo' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns analysis result' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_entity_1.User, Object]),
+    __metadata("design:returntype", Promise)
+], WardrobeController.prototype, "analyzeFromImage", null);
 exports.WardrobeController = WardrobeController = __decorate([
     (0, swagger_1.ApiTags)('wardrobe'),
     (0, common_1.Controller)('wardrobe'),

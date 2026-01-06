@@ -38,7 +38,7 @@ let WardrobeService = class WardrobeService {
             name: createDto.name || aiAnalysis.suggestedName,
             category: createDto.category || aiAnalysis.category,
             subcategory: createDto.subcategory || aiAnalysis.subcategory,
-            primaryColor: aiAnalysis.primaryColor,
+            primaryColor: createDto.primaryColor || aiAnalysis.primaryColor,
             primaryColorHex: aiAnalysis.primaryColorHex,
             secondaryColors: aiAnalysis.secondaryColors,
             pattern: aiAnalysis.pattern,
@@ -53,6 +53,9 @@ let WardrobeService = class WardrobeService {
             aiMetadata: aiAnalysis.metadata,
         });
         return this.wardrobeRepository.save(item);
+    }
+    async analyzeClothing(imageUrl) {
+        return this.aiService.analyzeClothingImage(imageUrl);
     }
     async findAll(userId, query) {
         const { category, color, season, occasion, brand, minFormality, maxFormality, isFavorite, search, sortBy = 'createdAt', sortOrder = 'DESC', page = 1, limit = 20, } = query;

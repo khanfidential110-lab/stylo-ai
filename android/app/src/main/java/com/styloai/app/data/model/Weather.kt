@@ -2,6 +2,31 @@ package com.styloai.app.data.model
 
 import com.google.gson.annotations.SerializedName
 
+// Wrapper for weather API response
+data class WeatherResponse(
+    val weather: WeatherData,
+    val recommendations: ClothingRecommendations?
+)
+
+data class WeatherData(
+    val temperature: Double,
+    val feelsLike: Double,
+    val humidity: Int,
+    val windSpeed: Double,
+    val description: String,
+    val icon: String,
+    val city: String,
+    val country: String?
+)
+
+data class ClothingRecommendations(
+    val layers: List<String>,
+    val accessories: List<String>,
+    val materials: List<String>,
+    val avoid: List<String>
+)
+
+// Legacy WeatherInfo for compatibility
 data class WeatherInfo(
     val temperature: Double,
     @SerializedName("feels_like") val feelsLike: Double,

@@ -64,8 +64,16 @@ export declare class WardrobeController {
         personDetected: boolean;
         fullBodyVisible: boolean;
     }>;
+    detectFromImage(user: User, file: Express.Multer.File, detectDto: DetectItemsDto): Promise<import("./outfit-detection.service").OutfitDetectionResult | {
+        savedItems: import("../database/entities").WardrobeItem[];
+        originalImageUrl: string;
+        detectedItems: import("./outfit-detection.service").DetectedItem[];
+        personDetected: boolean;
+        fullBodyVisible: boolean;
+    }>;
     saveDetectedItems(user: User, saveDto: SaveDetectedItemsDto): Promise<{
         message: string;
         items: import("../database/entities").WardrobeItem[];
     }>;
+    analyzeFromImage(user: User, file: Express.Multer.File): Promise<import("./ai.service").ClothingAnalysis>;
 }

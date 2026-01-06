@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ChatMessage, MessageRole, MessageAttachment } from '../database/entities/chat-message.entity';
 import { WardrobeService } from '../wardrobe/wardrobe.service';
 import { WeatherService } from '../weather/weather.service';
+import { GeminiService } from '../common/services/gemini.service';
 
 export interface ChatResponse {
   message: string;
@@ -26,7 +27,8 @@ export class AiChatService {
     private readonly configService: ConfigService,
     private readonly wardrobeService: WardrobeService,
     private readonly weatherService: WeatherService,
-  ) {}
+    private readonly geminiService: GeminiService,
+  ) { }
 
   async generateResponse(
     userId: string,
@@ -34,28 +36,38 @@ export class AiChatService {
     history: ChatMessage[],
     attachments?: MessageAttachment[],
   ): Promise<ChatResponse> {
-    // Analyze intent
-    const intent = this.analyzeIntent(message);
+    try {
+      // Analyze intent
+      const intent = this.analyzeIntent(message);
 
-    // Generate response based on intent
-    switch (intent.type) {
-      case 'outfit_recommendation':
-        return this.handleOutfitRecommendation(userId, intent.entities);
+      // Generate response based on intent
+      switch (intent.type) {
+        case 'outfit_recommendation':
+          return this.handleOutfitRecommendation(userId, intent.entities);
 
-      case 'weather_outfit':
-        return this.handleWeatherOutfit(userId, intent.entities);
+        case 'weather_outfit':
+          return this.handleWeatherOutfit(userId, intent.entities);
 
-      case 'item_pairing':
-        return this.handleItemPairing(userId, intent.entities);
+        case 'item_pairing':
+          return this.handleItemPairing(userId, intent.entities);
 
-      case 'style_advice':
-        return this.handleStyleAdvice(userId, message);
+        case 'style_advice':
+          return this.handleStyleAdvice(userId, message);
 
-      case 'wardrobe_question':
-        return this.handleWardrobeQuestion(userId, message);
+        case 'wardrobe_question':
+          return this.handleWardrobeQuestion(userId, message);
 
-      default:
-        return this.handleGeneralQuery(message);
+        default:
+          return this.handleGeneralQuery(message);
+      }
+    } catch (error) {
+      console.error('AI Chat Error:', error);
+      return {
+        message: "I'm having trouble connecting to my fashion brain right now. But I can still help you browse your wardrobe!",
+        quickActions: [
+          { label: 'Browse Wardrobe', action: 'browse_wardrobe' }
+        ]
+      };
     }
   }
 
@@ -65,7 +77,7 @@ export class AiChatService {
     // Weather-related outfit request
     if (
       (lowerMessage.includes('weather') || lowerMessage.includes('cold') ||
-       lowerMessage.includes('hot') || lowerMessage.includes('rain')) &&
+        lowerMessage.includes('hot') || lowerMessage.includes('rain')) &&
       (lowerMessage.includes('wear') || lowerMessage.includes('outfit'))
     ) {
       return { type: 'weather_outfit', entities: {} };
@@ -271,23 +283,36 @@ export class AiChatService {
     };
   }
 
-  private handleGeneralQuery(message: string): ChatResponse {
-    return {
-      message: `I'm your personal style assistant! Here's what I can help you with:\n\n` +
-        `**Outfit Recommendations** - Tell me where you're going\n` +
-        `**Weather-Based Styling** - I'll check the forecast and suggest appropriate outfits\n` +
-        `**Item Pairing** - Ask what goes with any piece\n` +
-        `**Wardrobe Analytics** - Understand your closet better\n` +
-        `**Style Advice** - Get personalized fashion tips\n\n` +
-        `Just ask me something like:\n` +
-        `- "What should I wear to a dinner date?"\n` +
-        `- "It's cold outside, what should I wear?"\n` +
-        `- "What goes with my blue blazer?"`,
-      quickActions: [
-        { label: "Today's Weather Picks", action: 'weather_outfit' },
-        { label: 'Outfit for Event', action: 'occasion_outfit' },
-        { label: 'Surprise Me', action: 'random_outfit' },
-      ],
-    };
+  private async handleGeneralQuery(message: string): Promise<ChatResponse> {
+    // Use Gemini AI for real responses
+    try {
+      const aiResponse = await this.geminiService.chat(message);
+      return {
+        message: aiResponse,
+        quickActions: [
+          { label: "Today's Weather Picks", action: 'weather_outfit' },
+          { label: 'Outfit for Event', action: 'occasion_outfit' },
+          { label: 'Surprise Me', action: 'random_outfit' },
+        ],
+      };
+    } catch (error) {
+      return {
+        message: `I'm your personal style assistant! Here's what I can help you with:\n\n` +
+          `**Outfit Recommendations** - Tell me where you're going\n` +
+          `**Weather-Based Styling** - I'll check the forecast and suggest appropriate outfits\n` +
+          `**Item Pairing** - Ask what goes with any piece\n` +
+          `**Wardrobe Analytics** - Understand your closet better\n` +
+          `**Style Advice** - Get personalized fashion tips\n\n` +
+          `Just ask me something like:\n` +
+          `- "What should I wear to a dinner date?"\n` +
+          `- "It's cold outside, what should I wear?"\n` +
+          `- "What goes with my blue blazer?"`,
+        quickActions: [
+          { label: "Today's Weather Picks", action: 'weather_outfit' },
+          { label: 'Outfit for Event', action: 'occasion_outfit' },
+          { label: 'Surprise Me', action: 'random_outfit' },
+        ],
+      };
+    }
   }
 }

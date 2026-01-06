@@ -13,7 +13,7 @@ class OutfitRepository @Inject constructor(
         return try {
             val response = api.getOutfits()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                Result.success(response.body()!!.outfits)
             } else {
                 Result.failure(Exception("Failed to fetch outfits"))
             }

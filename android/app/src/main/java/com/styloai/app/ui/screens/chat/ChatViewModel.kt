@@ -1,12 +1,10 @@
 package com.styloai.app.ui.screens.chat
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.styloai.app.data.model.*
 import com.styloai.app.data.repository.ChatRepository
+import com.styloai.app.ui.base.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -25,26 +23,21 @@ data class ChatUiState(
         )
     ),
     val inputText: String = "",
-    val isLoading: Boolean = false,
     val conversationId: String? = null,
-    val conversations: List<Conversation> = emptyList(),
-    val error: String? = null
+    val conversations: List<Conversation> = emptyList()
 )
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val repository: ChatRepository
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(ChatUiState())
-    val uiState: StateFlow<ChatUiState> = _uiState
+) : BaseViewModel<ChatUiState>(ChatUiState()) {
 
     fun updateInputText(text: String) {
-        _uiState.value = _uiState.value.copy(inputText = text)
+        updateState { it.copy(inputText = text) }
     }
 
     fun sendMessage() {
-        val text = _uiState.value.inputText.trim()
+        val text = uiState.value.inputText.trim()
         if (text.isEmpty()) return
 
         val userMessage = DisplayMessage(
@@ -53,16 +46,18 @@ class ChatViewModel @Inject constructor(
             content = text
         )
 
-        _uiState.value = _uiState.value.copy(
-            messages = _uiState.value.messages + userMessage,
-            inputText = "",
-            isLoading = true
-        )
+        updateState { 
+            it.copy(
+                messages = it.messages + userMessage,
+                inputText = ""
+            )
+        }
 
         viewModelScope.launch {
+            setLoading(true)
             val result = repository.sendMessage(
                 message = text,
-                conversationId = _uiState.value.conversationId
+                conversationId = uiState.value.conversationId
             )
 
             result.fold(
@@ -74,25 +69,24 @@ class ChatViewModel @Inject constructor(
                         quickActions = response.message.quickActions
                     )
 
-                    _uiState.value = _uiState.value.copy(
-                        messages = _uiState.value.messages + assistantMessage,
-                        isLoading = false,
-                        conversationId = response.conversationId
-                    )
+                    updateState { 
+                        it.copy(
+                            messages = it.messages + assistantMessage,
+                            conversationId = response.conversationId
+                        )
+                    }
+                    setLoading(false)
                 },
                 onFailure = { error ->
-                    // Add error message as assistant response
                     val errorMessage = DisplayMessage(
                         id = UUID.randomUUID().toString(),
                         role = MessageRole.ASSISTANT,
                         content = "I'm sorry, I encountered an error. Please try again."
                     )
 
-                    _uiState.value = _uiState.value.copy(
-                        messages = _uiState.value.messages + errorMessage,
-                        isLoading = false,
-                        error = error.message
-                    )
+                    updateState { it.copy(messages = it.messages + errorMessage) }
+                    setLoading(false)
+                    showError(error.message ?: "Failed to send message")
                 }
             )
         }
@@ -106,25 +100,27 @@ class ChatViewModel @Inject constructor(
             else -> action
         }
 
-        _uiState.value = _uiState.value.copy(inputText = message)
+        updateInputText(message)
         sendMessage()
     }
 
     fun startNewConversation() {
-        _uiState.value = ChatUiState()
+        updateState { ChatUiState() }
     }
 
     fun loadConversations() {
         viewModelScope.launch {
             repository.getConversations().onSuccess { conversations ->
-                _uiState.value = _uiState.value.copy(conversations = conversations)
+                updateState { it.copy(conversations = conversations) }
+            }.onFailure { error ->
+                showError(error.message ?: "Failed to load conversations")
             }
         }
     }
 
     fun loadConversation(conversationId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            setLoading(true)
 
             repository.getMessages(conversationId).fold(
                 onSuccess = { messages ->
@@ -138,23 +134,19 @@ class ChatViewModel @Inject constructor(
                         )
                     }
 
-                    _uiState.value = _uiState.value.copy(
-                        messages = displayMessages,
-                        isLoading = false,
-                        conversationId = conversationId
-                    )
+                    updateState { 
+                        it.copy(
+                            messages = displayMessages,
+                            conversationId = conversationId
+                        )
+                    }
+                    setLoading(false)
                 },
-                onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = "Failed to load conversation"
-                    )
+                onFailure = { error ->
+                    setLoading(false)
+                    showError(error.message ?: "Failed to load conversation")
                 }
             )
         }
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
     }
 }

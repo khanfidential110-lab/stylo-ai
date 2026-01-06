@@ -8,7 +8,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ClothingCategory, Pattern, Season } from '../../database/entities/wardrobe-item.entity';
 
 export class CreateWardrobeItemDto {
@@ -32,13 +32,30 @@ export class CreateWardrobeItemDto {
   @IsOptional()
   material?: string;
 
+  @ApiProperty({ example: 'Blue', required: false })
+  @IsString()
+  @IsOptional()
+  primaryColor?: string;
+
   @ApiProperty({ enum: Season, isArray: true, required: false })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try { return JSON.parse(value); } catch (e) { return value.split(','); }
+    }
+    return value;
+  })
   @IsArray()
   @IsEnum(Season, { each: true })
   @IsOptional()
   season?: Season[];
 
   @ApiProperty({ example: ['casual', 'work'], required: false })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try { return JSON.parse(value); } catch (e) { return value.split(','); }
+    }
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
@@ -58,9 +75,16 @@ export class CreateWardrobeItemDto {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
+  @Transform(({ value }) => Number(value))
   price?: number;
 
   @ApiProperty({ example: ['favorite', 'summer'], required: false })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try { return JSON.parse(value); } catch (e) { return value.split(','); }
+    }
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

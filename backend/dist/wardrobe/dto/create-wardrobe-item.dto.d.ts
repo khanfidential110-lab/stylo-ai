@@ -4,6 +4,7 @@ export declare class CreateWardrobeItemDto {
     category?: ClothingCategory;
     subcategory?: string;
     material?: string;
+    primaryColor?: string;
     season?: Season[];
     occasions?: string[];
     brand?: string;

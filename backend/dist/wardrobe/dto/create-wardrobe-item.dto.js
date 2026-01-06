@@ -42,7 +42,24 @@ __decorate([
     __metadata("design:type", String)
 ], CreateWardrobeItemDto.prototype, "material", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Blue', required: false }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateWardrobeItemDto.prototype, "primaryColor", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ enum: wardrobe_item_entity_1.Season, isArray: true, required: false }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value === 'string') {
+            try {
+                return JSON.parse(value);
+            }
+            catch (e) {
+                return value.split(',');
+            }
+        }
+        return value;
+    }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsEnum)(wardrobe_item_entity_1.Season, { each: true }),
     (0, class_validator_1.IsOptional)(),
@@ -50,6 +67,17 @@ __decorate([
 ], CreateWardrobeItemDto.prototype, "season", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: ['casual', 'work'], required: false }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value === 'string') {
+            try {
+                return JSON.parse(value);
+            }
+            catch (e) {
+                return value.split(',');
+            }
+        }
+        return value;
+    }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     (0, class_validator_1.IsOptional)(),
@@ -72,10 +100,22 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
+    (0, class_transformer_1.Transform)(({ value }) => Number(value)),
     __metadata("design:type", Number)
 ], CreateWardrobeItemDto.prototype, "price", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: ['favorite', 'summer'], required: false }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value === 'string') {
+            try {
+                return JSON.parse(value);
+            }
+            catch (e) {
+                return value.split(',');
+            }
+        }
+        return value;
+    }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     (0, class_validator_1.IsOptional)(),

@@ -5,137 +5,119 @@ struct AuthView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var isLogin = true
-
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Logo and Title
-                    VStack(spacing: 8) {
-                        Image(systemName: "tshirt.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.brandIndigo)
-
-                        Text("STYLO AI")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.primary)
-
-                        Text("Your Personal AI Stylist")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 40)
-
-                    // Toggle between Login and Register
-                    Picker("", selection: $isLogin) {
-                        Text("Login").tag(true)
-                        Text("Sign Up").tag(false)
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-
-                    // Form Fields
-                    VStack(spacing: 16) {
-                        if !isLogin {
-                            TextField("Name (optional)", text: $authViewModel.name)
-                                .textFieldStyle(StyloTextFieldStyle())
-                                .textContentType(.name)
+            ZStack {
+                // Background
+                Theme.primaryGradient
+                    .ignoresSafeArea()
+                    .overlay(
+                        Color.black.opacity(0.1)
+                    )
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        Spacer(minLength: 40)
+                        
+                        // Logo Section
+                        VStack(spacing: 12) {
+                            Image(systemName: "tshirt.fill")
+                                .font(.system(size: 64))
+                                .foregroundColor(.white)
+                                .shadow(radius: 10)
+                            
+                            Text("STYLO AI")
+                                .font(.system(size: 36, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                            
+                            Text("Your Personal AI Stylist")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.9))
                         }
-
-                        TextField("Email", text: $authViewModel.email)
-                            .textFieldStyle(StyloTextFieldStyle())
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-
-                        SecureField("Password", text: $authViewModel.password)
-                            .textFieldStyle(StyloTextFieldStyle())
-                            .textContentType(isLogin ? .password : .newPassword)
-                    }
-                    .padding(.horizontal)
-
-                    // Main Action Button
-                    Button {
-                        Task {
-                            let success = isLogin
-                                ? await authViewModel.login()
-                                : await authViewModel.register()
-                            if success {
-                                appState.isLoggedIn = true
-                                await appState.loadUserProfile()
+                        
+                        // Auth Card
+                        VStack(spacing: 24) {
+                            // Tabs
+                            HStack(spacing: 0) {
+                                AuthTabButton(title: "Login", isSelected: isLogin) {
+                                    withAnimation { isLogin = true }
+                                }
+                                AuthTabButton(title: "Sign Up", isSelected: !isLogin) {
+                                    withAnimation { isLogin = false }
+                                }
                             }
-                        }
-                    } label: {
-                        HStack {
-                            if authViewModel.isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text(isLogin ? "Login" : "Create Account")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color.brandIndigo)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                    }
-                    .disabled(authViewModel.isLoading)
-                    .padding(.horizontal)
-
-                    // Divider
-                    HStack {
-                        Rectangle()
-                            .fill(Color.gray300)
-                            .frame(height: 1)
-                        Text("or continue with")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Rectangle()
-                            .fill(Color.gray300)
-                            .frame(height: 1)
-                    }
-                    .padding(.horizontal)
-
-                    // Social Login Buttons
-                    VStack(spacing: 12) {
-                        // Sign in with Apple
-                        SignInWithAppleButton(.signIn) { request in
-                            request.requestedScopes = [.email, .fullName]
-                        } onCompletion: { result in
-                            handleAppleSignIn(result)
-                        }
-                        .signInWithAppleButtonStyle(.black)
-                        .frame(height: 48)
-                        .cornerRadius(12)
-
-                        // Google Sign In
-                        Button {
-                            Task {
-                                await authViewModel.signInWithGoogle()
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: "g.circle.fill")
-                                Text("Continue with Google")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(Color.gray100)
-                            .foregroundColor(.primary)
+                            .padding(4)
+                            .background(Color.white.opacity(0.2))
                             .cornerRadius(12)
+                            .padding(.horizontal)
+                            .padding(.top)
+                            
+                            // Form
+                            VStack(spacing: 20) {
+                                if !isLogin {
+                                    StyloTextField(title: "Full Name", text: $authViewModel.name, icon: "person")
+                                }
+                                
+                                StyloTextField(title: "Email", text: $authViewModel.email, icon: "envelope")
+                                    .textContentType(.emailAddress)
+                                    .keyboardType(.emailAddress)
+                                    .textInputAutocapitalization(.never)
+                                
+                                StyloTextField(title: "Password", text: $authViewModel.password, isSecure: true, icon: "lock")
+                                    .textContentType(isLogin ? .password : .newPassword)
+                            }
+                            .padding(.horizontal)
+                            
+                            // Action Button
+                            StyloButton(isLogin ? "Login" : "Create Account", variant: .primary) {
+                                Task {
+                                    let success = isLogin
+                                        ? await authViewModel.login()
+                                        : await authViewModel.register()
+                                    if success {
+                                        appState.isLoggedIn = true
+                                        await appState.loadUserProfile()
+                                    }
+                                }
+                            }
+                            .disabled(authViewModel.isLoading)
+                            .opacity(authViewModel.isLoading ? 0.7 : 1)
+                            .padding(.horizontal)
+                            .padding(.bottom)
                         }
-                    }
-                    .padding(.horizontal)
-
-                    // Terms
-                    Text("By continuing, you agree to our Terms of Service and Privacy Policy")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                        .background(.thinMaterial)
+                        .cornerRadius(24)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
                         .padding(.horizontal)
-
-                    Spacer()
+                        .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+                        
+                        // Social Login
+                        VStack(spacing: 16) {
+                            HStack {
+                                Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                                Text("Or continue with")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
+                                Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1)
+                            }
+                            .padding(.horizontal, 40)
+                            
+                            HStack(spacing: 20) {
+                                SocialButton(icon: "apple.logo", action: {})
+                                SocialButton(icon: "g.circle.fill", action: {
+                                    Task { await authViewModel.signInWithGoogle() }
+                                })
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.bottom, 40)
                 }
             }
             .alert("Error", isPresented: $authViewModel.showError) {
@@ -145,38 +127,51 @@ struct AuthView: View {
             }
         }
     }
+}
 
-    private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                let userIdentifier = appleIDCredential.user
-                let email = appleIDCredential.email ?? ""
-                let fullName = [
-                    appleIDCredential.fullName?.givenName,
-                    appleIDCredential.fullName?.familyName
-                ].compactMap { $0 }.joined(separator: " ")
-
-                // Handle Apple sign in
-                print("Apple Sign In: \(userIdentifier), \(email), \(fullName)")
-            }
-        case .failure(let error):
-            print("Apple Sign In Error: \(error)")
+struct AuthTabButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(isSelected ? .brandIndigo : .white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                     isSelected ? Color.white : Color.clear
+                )
+                .cornerRadius(10)
         }
     }
 }
 
-struct StyloTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding()
-            .background(Color.gray100)
-            .cornerRadius(12)
+struct SocialButton: View {
+    let icon: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                )
+        }
     }
 }
 
-#Preview {
-    AuthView()
-        .environmentObject(AppState())
-        .environmentObject(AuthViewModel())
+struct AuthView_Previews: PreviewProvider {
+    static var previews: some View {
+        AuthView()
+            .environmentObject(AppState())
+            .environmentObject(AuthViewModel())
+    }
 }

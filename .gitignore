@@ -1,0 +1,8 @@
+node_modules/
+.env
+.DS_Store
+build/
+.gradle/
+.idea/
+dist/
+captured_item_*.jpg

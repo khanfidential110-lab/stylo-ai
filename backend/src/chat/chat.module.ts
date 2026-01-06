@@ -7,6 +7,7 @@ import { LLMService } from './llm.service';
 import { ChatMessage } from '../database/entities/chat-message.entity';
 import { WardrobeModule } from '../wardrobe/wardrobe.module';
 import { WeatherModule } from '../weather/weather.module';
+import { GeminiService } from '../common/services/gemini.service';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { WeatherModule } from '../weather/weather.module';
     WeatherModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService, AiChatService, LLMService],
-  exports: [ChatService, LLMService],
+  providers: [ChatService, AiChatService, LLMService, GeminiService],
+  exports: [ChatService, LLMService, GeminiService],
 })
-export class ChatModule {}
+export class ChatModule { }

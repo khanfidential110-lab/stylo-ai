@@ -40,7 +40,7 @@ export class WardrobeController {
   constructor(
     private readonly wardrobeService: WardrobeService,
     private readonly outfitDetectionService: OutfitDetectionService,
-  ) {}
+  ) { }
 
   @Get()
   @ApiOperation({ summary: 'Get all wardrobe items with filters' })
@@ -162,6 +162,45 @@ export class WardrobeController {
     return result;
   }
 
+  @Post('detect/upload')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Detect clothing items from an uploaded photo' })
+  @ApiResponse({ status: 200, description: 'Returns detected items' })
+  async detectFromImage(
+    @CurrentUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() detectDto: DetectItemsDto, // autoSave flag
+  ) {
+    if (!file) {
+      throw new Error('No image file provided');
+    }
+
+    // In production: upload to S3. For now, use a mock URL or local path
+    // We assume the service can handle base64 or we mock it.
+    // For this demo, since detection is mocked, we can pass a dummy URL or the filename.
+    const imageUrl = `https://cdn.stylo-ai.com/uploads/${file.filename}`;
+
+    const result = await this.outfitDetectionService.detectItemsFromPhoto(imageUrl);
+
+    if (detectDto.autoSave && result.detectedItems.length > 0) {
+      const savedItems = await this.wardrobeService.bulkCreate(
+        user.id,
+        result.detectedItems.map((item) => ({
+          imageUrl: item.croppedImageUrl || imageUrl,
+          data: {
+            name: item.suggestedName,
+            category: item.category,
+            subcategory: item.subcategory,
+          },
+        })),
+      );
+      return { ...result, savedItems };
+    }
+
+    return result;
+  }
+
   @Post('detect/save')
   @ApiOperation({ summary: 'Save selected detected items to wardrobe' })
   @ApiResponse({ status: 201, description: 'Items saved to wardrobe' })
@@ -187,5 +226,22 @@ export class WardrobeController {
       message: `${savedItems.length} items saved to wardrobe`,
       items: savedItems,
     };
+  }
+
+  @Post('analyze/upload')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Analyze clothing item from an uploaded photo' })
+  @ApiResponse({ status: 200, description: 'Returns analysis result' })
+  async analyzeFromImage(
+    @CurrentUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new Error('No image file provided');
+    }
+
+    const imageUrl = `https://cdn.stylo-ai.com/uploads/${file.filename}`;
+    return this.wardrobeService.analyzeClothing(imageUrl);
   }
 }

@@ -3,6 +3,8 @@ package com.styloai.app.data.api
 import com.styloai.app.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
 interface StyloApiService {
 
@@ -38,13 +40,28 @@ interface StyloApiService {
         @Query("category") category: String? = null,
         @Query("season") season: String? = null,
         @Query("occasion") occasion: String? = null
-    ): Response<List<WardrobeItem>>
+    ): Response<PaginatedWardrobeResponse>
 
     @GET("wardrobe/{id}")
     suspend fun getWardrobeItem(@Path("id") id: String): Response<WardrobeItem>
 
     @POST("wardrobe")
     suspend fun createWardrobeItem(@Body item: CreateWardrobeItemRequest): Response<WardrobeItem>
+
+    @Multipart
+    @POST("wardrobe")
+    suspend fun uploadWardrobeItem(
+        @Part image: MultipartBody.Part,
+        @Part("category") category: RequestBody,
+        @Part("name") name: RequestBody? = null,
+        @Part("primary_color") primaryColor: RequestBody? = null,
+        @Part("brand") brand: RequestBody? = null,
+        @Part("size") size: RequestBody? = null,
+        @Part("material") material: RequestBody? = null,
+        @Part("pattern") pattern: RequestBody? = null,
+        @Part("seasons") seasons: RequestBody? = null,
+        @Part("occasions") occasions: RequestBody? = null
+    ): Response<WardrobeItem>
 
     @PATCH("wardrobe/{id}")
     suspend fun updateWardrobeItem(
@@ -60,13 +77,26 @@ interface StyloApiService {
 
     @POST("wardrobe/analyze")
     suspend fun analyzeClothing(@Body body: Map<String, String>): Response<Map<String, Any>>
+    
+    @Multipart
+    @POST("wardrobe/analyze/upload")
+    suspend fun analyzeClothingFromImage(
+        @Part image: MultipartBody.Part
+    ): Response<Map<String, Any>>
 
     @POST("wardrobe/detect-outfit")
     suspend fun detectOutfitItems(@Body body: Map<String, String>): Response<OutfitDetectionResult>
+    
+    @Multipart
+    @POST("wardrobe/detect/upload")
+    suspend fun detectOutfitFromImage(
+        @Part image: MultipartBody.Part,
+        @Part("autoSave") autoSave: RequestBody? = null
+    ): Response<OutfitDetectionResult>
 
     // Outfits
     @GET("outfits")
-    suspend fun getOutfits(): Response<List<Outfit>>
+    suspend fun getOutfits(): Response<PaginatedOutfitResponse>
 
     @GET("outfits/{id}")
     suspend fun getOutfit(@Path("id") id: String): Response<Outfit>
@@ -103,12 +133,12 @@ interface StyloApiService {
     suspend fun createCalendarEntry(@Body body: Map<String, String>): Response<OutfitCalendarEntry>
 
     // Weather
-    @GET("weather/current")
+    @GET("weather")
     suspend fun getCurrentWeather(
         @Query("lat") lat: Double? = null,
         @Query("lon") lon: Double? = null,
         @Query("city") city: String? = null
-    ): Response<WeatherInfo>
+    ): Response<WeatherResponse>
 
     @GET("weather/forecast")
     suspend fun getWeatherForecast(
